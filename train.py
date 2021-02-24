@@ -28,6 +28,18 @@ def main(cfg: DictConfig) -> None:
     for param in encoder_decoder.model.encoder.parameters():
         param.requires_grad = False
 
+    # freeze encoder and decoder
+    for param in encoder_decoder.model.parameters():
+        param.requires_grad = False
+
+    # unfreeze cross-attention layers
+    for layer in encoder_decoder.model.decoder.roberta.encoder.layer:
+        for param in layer.crossattention.parameters():
+            param.requires_grad = True
+    # unfreeze lm head
+    for param in encoder_decoder.model.decoder.lm_head.parameters():
+        param.requires_grad = True
+
     trainer_logger = instantiate(cfg.logger) if "logger" in cfg else True
     trainer_logger.watch(encoder_decoder, log='gradients', log_freq=250)
 

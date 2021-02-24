@@ -1,27 +1,33 @@
 dataset:
   dataset_root: raw_data/CleanedJiang
-  diff_max_len: 100
+  diff_max_len: 110
   msg_max_len: 30
+  encoder_name_or_path: microsoft/codebert-base
+  decoder_name_or_path: microsoft/codebert-base
   train_dataloader_conf:
-    batch_size: 32
+    batch_size: 8
     shuffle: true
     num_workers: 4
   val_dataloader_conf:
-    batch_size: 32
+    batch_size: 8
     num_workers: 4
   test_dataloader_conf:
-    batch_size: 32
+    batch_size: 8
     num_workers: 4
 logger:
   _target_: pytorch_lightning.loggers.WandbLogger
-  name: beam search decode encoderdecoder architecture
+  name: codebert+codebert use diff with changes only
   project: commit_message_generation
 model:
   learning_rate: 1e-4
-  reduction: mean
-  model_name_or_path: microsoft/codebert-base
+  encoder_name_or_path: microsoft/codebert-base
+  decoder_name_or_path: microsoft/codebert-base
+  unfreeze_after: 10
+  freeze_after: -1
+  num_layers_encoder: -1
+  num_layers_decoder: -1
 trainer:
   gpus: 1
-  max_epochs: 3
-  limit_val_batches: 100
-  val_check_interval: 0.5
+  max_epochs: 40
+  num_sanity_val_steps: 2
+  accumulate_grad_batches: 1
