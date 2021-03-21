@@ -22,16 +22,16 @@ class CommitProcessor:
             old_path = CommitProcessor.preprocess_diff(m.old_path)
         
         if m.change_type == ModificationType.ADD:
-            return f"""new file \n <FILE> {new_path} \n"""
+            return f"""new file <nl> <FILE> {new_path} <nl> """
 
         if m.change_type == ModificationType.RENAME:
-            return f"""rename from {old_path} \n rename to {new_path} \n"""
+            return f"""rename from {old_path} <nl> rename to {new_path} <nl> """
 
         if m.change_type == ModificationType.DELETE:
-            return f"""deleted file \n <FILE> {old_path} \n"""
+            return f"""deleted file <nl> <FILE> {old_path} <nl> """
 
         if m.change_type == ModificationType.MODIFY:
-            return f"""<FILE> {new_path} \n"""
+            return f"""<FILE> {new_path} <nl> """
 
     @staticmethod
     def preprocess_diff(diff: str) -> str:
@@ -43,6 +43,7 @@ class CommitProcessor:
         """
         s = re.sub('@@.*@@.*\n', '', diff)
         s = s.translate(str.maketrans({key: " {0} ".format(key) for key in string.punctuation}))
+        s = re.sub('\n', ' <nl> ', s)
         s = re.sub(' +', ' ', s)
         s = s.strip()
         return s
@@ -63,7 +64,7 @@ class CommitProcessor:
                 line = line.strip()
                 msg_lines.append(line)
                 
-        return ' \\n '.join(msg_lines)
+        return ' <nl> '.join(msg_lines)
 
     @staticmethod
     def get_diff_from_modification(m: Modification) -> str:
@@ -92,6 +93,5 @@ class CommitProcessor:
         for m in commit.modifications:
             diff = CommitProcessor.get_diff_from_modification(m)
             if diff is not None:
-                diff = DiffProcessor.process_diff(diff)
                 res['diff'].append(diff)
         return res

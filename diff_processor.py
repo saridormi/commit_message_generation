@@ -4,7 +4,7 @@ from typing import Tuple, List
 
 
 def tokenize_git_diff_output_string(diff: str) -> List[List[str]]:
-    lines = [line.split() for line in diff.split('\n')]
+    lines = [line.split() for line in diff.split('<nl>')]
     return lines
 
 
