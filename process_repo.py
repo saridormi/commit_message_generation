@@ -10,8 +10,16 @@ from commit_processor import CommitProcessor
 
 
 def process_repo(repo_name, repo_url, file_types=['.java']):
+    """
+    Download author, date, diff and message of all .java-related commits
+    and save to .jsonl.gz
+    """
     commit_data_dir = 'extracted_data'
     os.makedirs(commit_data_dir, exist_ok=True)
+
+    # skip (for now) as it always leads to crash ^^
+    if repo_name == 'aws_aws-sdk-java':
+        return
 
     if repo_name + '.jsonl.gz' in os.listdir(commit_data_dir):
         return
