@@ -70,8 +70,8 @@ class DataProcessor:
             # remove issue id and commit id
             # issue id: super simple regex to match # 23 (any number)
             # commit id: https://stackoverflow.com/questions/468370/a-regex-to-match-a-sha1
-            df['message'].apply(lambda x: re.sub(r'\b([a-f0-9]{7,40})\b', '', re.sub(r'# \d+', '', x)))
-            df['diff'].apply(lambda x: [re.sub(r'\b([a-f0-9]{7,40})\b', '', re.sub(r'# \d+', '', diff)) for diff in x])
+            df['message'] = df['message'].apply(lambda x: re.sub(r'\b([a-f0-9]{7,40})\b', '', re.sub(r'# \d+', '', x)))
+            df['diff'] = df['diff'].apply(lambda x: [re.sub(r'\b([a-f0-9]{7,40})\b', '', re.sub(r'# \d+', '', diff)) for diff in x])
 
             df['num_mods'] = df['diff'].apply(lambda x: len(x))
             df['diff_len'] = df['diff'].apply(lambda x: sum([len(diff.split()) for diff in x]))
@@ -126,8 +126,8 @@ class DataProcessor:
             # remove issue id and commit id
             # issue id: super simple regex to match # 23 (any number)
             # commit id: https://stackoverflow.com/questions/468370/a-regex-to-match-a-sha1
-            df['message'].apply(lambda x: re.sub(r'\b([a-f0-9]{7,40})\b', '', re.sub(r'# \d+', '', x)))
-            df['diff'].apply(lambda x: [re.sub(r'\b([a-f0-9]{7,40})\b', '', re.sub(r'# \d+', '', diff)) for diff in x])
+            df['message'] = df['message'].apply(lambda x: re.sub(r'\b([a-f0-9]{7,40})\b', '', re.sub(r'# \d+', '', x)))
+            df['diff'] = df['diff'].apply(lambda x: [re.sub(r'\b([a-f0-9]{7,40})\b', '', re.sub(r'# \d+', '', diff)) for diff in x])
 
             df['num_mods'] = df['diff'].apply(lambda x: len(x))
             df['diff_len'] = df['diff'].apply(lambda x: sum([len(diff.split()) for diff in x]))
@@ -392,21 +392,22 @@ class DataProcessor:
         print('===== STATS (after removing examples by percentiles) =====')
         pprint(stats)
 
-        # drop unchanged lines from diffs
-        self.drop_unchanged(input_dir=self.processed_data_dir_base,
-                            output_dir=self.processed_data_dir_base + '_no_unchanged')
-        stats = self.calculate_stats(self.processed_data_dir_base + '_no_unchanged',
-                                     self.stats_dir_base + '_no_unchanged')
-        print('===== STATS (after removing unchanged lines from diffs) =====')
-        pprint(stats)
-
         # drop examples with num tokens in diff > 2048
         self.drop_by_num_tokens(diff_max_len=2048,
-                                input_dir=self.processed_data_dir_base + '_no_unchanged',
-                                output_dir=self.processed_data_dir_base + '_no_unchanged_short')
-        stats = self.calculate_stats(self.processed_data_dir_base + '_no_unchanged_short',
-                                     self.stats_dir_base + '_no_unchanged_short')
-        print('===== STATS (after removing diffs with # tokens bigger than BERT max_len) =====')
+                                input_dir=self.processed_data_dir_base,
+                                output_dir=self.processed_data_dir_base + '_short')
+        stats = self.calculate_stats(self.processed_data_dir_base + '_short',
+                                     self.stats_dir_base + '__short')
+
+        print('===== STATS (after removing diffs with # tokens bigger than 1024) =====')
+        pprint(stats)
+
+        # drop unchanged lines from diffs
+        self.drop_unchanged(input_dir=self.processed_data_dir_base + '_short',
+                            output_dir=self.processed_data_dir_base + '_short_no_unchanged')
+        stats = self.calculate_stats(self.processed_data_dir_base + '_short_no_unchanged',
+                                     self.stats_dir_base + '_short_no_unchanged')
+        print('===== STATS (after removing unchanged lines from diffs) =====')
         pprint(stats)
 
 
