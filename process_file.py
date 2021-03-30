@@ -38,6 +38,19 @@ class DataProcessor:
         self.num_workers = num_workers
 
     @staticmethod
+    def _remove_ids(x: str) -> str:
+        # issue id: super simple regex to match [# any number]
+        x = re.sub(r'# \d+', '', x)
+        # issue id: super simple regex to match [ANYTHING - any number] and remove - number part only
+        x = re.sub(r'(^[A-Z]+) - [0-9]+', r'\1', x)
+        # commit id: https://stackoverflow.com/questions/468370/a-regex-to-match-a-sha1
+        x = re.sub(r'\b([a-f0-9]{7,40})\b', '', x)
+        # commit id: two cases to match [git - svn - id : anything]
+        x = re.sub(r'^git - svn - id : .*? <nl>', '', x)
+        x = re.sub(r'[^^]git - svn - id : .*$', '', x)
+        return x
+
+    @staticmethod
     def _calculate_percentiles(filename: str, input_dir: str, output_dir: str):
         """
         This function calculates 1%, 5%, 90%, 95%, 99% percentiles by:
@@ -68,11 +81,8 @@ class DataProcessor:
             # read json into DataFrame and create some numeric features
             df = pd.read_json(os.path.join(input_dir, filename), compression='gzip', lines=True)
             # remove issue id and commit id
-            # issue id: super simple regex to match # 23 (any number)
-            # commit id: https://stackoverflow.com/questions/468370/a-regex-to-match-a-sha1
-            df['message'] = df['message'].apply(lambda x: re.sub(r'\b([a-f0-9]{7,40})\b', '', re.sub(r'# \d+', '', x)))
-            df['diff'] = df['diff'].apply(lambda x: [re.sub(r'\b([a-f0-9]{7,40})\b', '', re.sub(r'# \d+', '', diff)) for diff in x])
-
+            df['message'] = df['message'].apply(lambda x: DataProcessor._remove_ids(x))
+            df['diff'] = df['diff'].apply(lambda diff: [DataProcessor._remove_ids(x) for x in diff])
             df['num_mods'] = df['diff'].apply(lambda x: len(x))
             df['diff_len'] = df['diff'].apply(lambda x: sum([len(diff.split()) for diff in x]))
             df['message_len'] = df['message'].apply(lambda x: len(x.split()))
@@ -126,8 +136,8 @@ class DataProcessor:
             # remove issue id and commit id
             # issue id: super simple regex to match # 23 (any number)
             # commit id: https://stackoverflow.com/questions/468370/a-regex-to-match-a-sha1
-            df['message'] = df['message'].apply(lambda x: re.sub(r'\b([a-f0-9]{7,40})\b', '', re.sub(r'# \d+', '', x)))
-            df['diff'] = df['diff'].apply(lambda x: [re.sub(r'\b([a-f0-9]{7,40})\b', '', re.sub(r'# \d+', '', diff)) for diff in x])
+            df['message'] = df['message'].apply(lambda x: DataProcessor._remove_ids(x))
+            df['diff'] = df['diff'].apply(lambda diff: [DataProcessor._remove_ids(x) for x in diff])
 
             df['num_mods'] = df['diff'].apply(lambda x: len(x))
             df['diff_len'] = df['diff'].apply(lambda x: sum([len(diff.split()) for diff in x]))
@@ -421,7 +431,7 @@ if __name__ == '__main__':
                               percentiles_dir=percentiles_dir,
                               processed_data_dir_base=processed_data_dir_base,
                               stats_dir_base=stats_dir_base,
-                              num_workers=4)
+                              num_workers=8)
     processor.process_data()
 
 
